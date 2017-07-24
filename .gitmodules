@@ -1,0 +1,3 @@
+[submodule "FlappyLearning"]
+	path = FlappyLearning
+	url = https://github.com/vvv1559/FlappyLearning.git
