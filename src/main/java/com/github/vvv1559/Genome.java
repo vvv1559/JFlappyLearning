@@ -7,10 +7,10 @@ public class Genome {
     /**
      * Composed of a score and a Neural Network.
      *
-     * @param score   score
      * @param network network
+     * @param score   score
      */
-    public Genome(int score, Network network) {
+    public Genome(Network network, int score) {
         this.score = score;
         this.network = network;
     }

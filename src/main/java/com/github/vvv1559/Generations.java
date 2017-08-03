@@ -40,8 +40,7 @@ public class Generations {
      */
     Network[] nextGeneration () {
         if (this.generations.isEmpty()) {
-            // Need to create first generation.
-            return null;
+            return firstGeneration();
         }
 
         Network[] gen = this.generations.get(this.generations.size() - 1).generateNextGeneration();

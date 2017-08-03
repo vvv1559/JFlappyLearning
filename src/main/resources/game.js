@@ -16,7 +16,12 @@ class Player {
         // });
     }
 
-    birdDied(birdNum, score) {
+    /**
+     * Fix bird score before it died
+     * @param {Bird} bird
+     * @param {number} score
+     */
+    birdDied(bird, score) {
 
     }
 
@@ -30,13 +35,19 @@ class Player {
     }
 
 
+    /**
+     * Answer the question: need bird's jump or not
+     * @param {Bird} bird
+     * @param {PipesLineWithHole[]} pipeLines List of pipe lines in the game
+     * @return {boolean}
+     */
     needFlap(bird, pipeLines) {
         //                let inputs = [this.birds[i].top / this.height, nextHole];
 
         let nextHoleTop = 0;
         const birdsNextPipeIndex = pipeLines.findIndex(pipeLine => pipeLine.left > bird.left);
         if (birdsNextPipeIndex !== -1) {
-            nextHoleTop = pipeLines[birdsNextPipeIndex].topPipe.bottom;
+            nextHoleTop = pipeLines[birdsNextPipeIndex].holeTop;
         }
 
         return Math.round(Math.random() * 14 - 13) > 0;
@@ -102,8 +113,8 @@ class Player {
 
 let FPS = 60;
 
-const speed = (speedMult) => {
-    FPS = speedMult * 60;
+const speed = (speedMul) => {
+    FPS = speedMul * 60;
 };
 
 /**
@@ -112,9 +123,11 @@ const speed = (speedMult) => {
  * @return {string} formatted time
  */
 const toHHMMSS = (secondsToConvert) => {
-    let hours = Math.floor(secondsToConvert / 3600);
-    let minutes = Math.floor((secondsToConvert - (hours * 3600)) / 60);
-    let seconds = secondsToConvert - (hours * 3600) - (minutes * 60);
+    let minutes = Math.floor(secondsToConvert / 60);
+    const seconds = secondsToConvert - minutes * 60;
+
+    const hours = Math.floor(minutes / 60);
+    minutes -= hours * 60;
 
     const fillLeadZero = val => (val < 10) ? "0" + val : val;
 
@@ -132,18 +145,22 @@ window.onload = () => {
     let inProcess = 0;
     let images = {};
 
-    for (let name in sprites) {
+    const startGame = () => {
+        const game = new Game(document.querySelector('#flappy'), images);
+        game.start();
+        game.update();
+        game.display();
+    };
+
+    for (const name in sprites) {
         inProcess++;
-        const path = sprites[name];
+        const imagePath = sprites[name];
 
         images[name] = new Image();
-        images[name].src = path;
+        images[name].src = imagePath;
         images[name].onload = () => {
             if (--inProcess === 0) {
-                const game = new Game(document.querySelector('#flappy'), images);
-                game.start();
-                game.update();
-                game.display();
+                startGame();
             }
         }
     }
@@ -209,14 +226,11 @@ class Bird {
 
 class PipesLineWithHole {
 
-    constructor(x, worldHeight, holeTop, holeHeight, holeWidth) {
+    constructor(x, holeTop, holeHeight, holeWidth) {
         this.left = x;
         this.holeTop = holeTop;
         this.holeHeight = holeHeight;
         this.width = holeWidth;
-
-        this.topPipe = new Pipe(x, 0, holeTop);
-        this.bottomPipe = new Pipe(x, holeTop + holeHeight, worldHeight);
     }
 
     update(deltaX) {
@@ -293,7 +307,7 @@ class Game {
             bird.checkAlive(this.worldHeight, pipeLines);
 
             if (!bird.alive) {
-                this.player.birdDied(i, this.score);
+                this.player.birdDied(bird, this.score);
                 this.birds.splice(i, 1);
 
                 if (!this.birds.length) {
@@ -316,7 +330,7 @@ class Game {
             const minPipeHeight = 50, holeHeight = 120;
             const holeTop = Math.round(Math.random() * (this.worldHeight - 2 * minPipeHeight - holeHeight)) + minPipeHeight;
 
-            pipeLines.push(new PipesLineWithHole(this.worldWidth, this.worldHeight, holeTop, holeHeight, this.pipeWidth));
+            pipeLines.push(new PipesLineWithHole(this.worldWidth, holeTop, holeHeight, this.pipeWidth));
         }
 
         this.maxScore = Math.max(++this.score, this.maxScore);

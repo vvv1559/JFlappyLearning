@@ -18,7 +18,7 @@ public class Generation {
      */
     void addGenome(Genome genome) {
         // Locate position to insert Genome into.
-        // The gnomes should remain sorted.
+        // The genomes should remain sorted.
         int i = 0;
         for (; i < this.genomes.length; i++) {
             // Sort in descending order.
@@ -46,7 +46,7 @@ public class Generation {
      *
      * @param g1 Genome 1.
      * @param g2 Genome 2.
-     * @param nbChilds Number of offspring (children).
+     * @param nbChilds Numbeget_github_repository(package_name)r of offspring (children).
      */
     private Genome[] breed(Genome g1, Genome g2, int nbChilds) {
         List<Genome> datas = new LinkedList<>();

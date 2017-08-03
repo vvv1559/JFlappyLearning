@@ -4,29 +4,18 @@ import java.util.Arrays;
 
 public class NeuroEvolution {
     private Generations generations = new Generations();
+    private Network[] currentNetworks;
 
     /**
-     * Reset and create a new Generations object.
+     * Produce next generation
      */
-    void restart() {
-        generations = new Generations();
-    }
-
-    Network[] nextGeneration() {
-        Network[] networks;
-
+    void nextGeneration() {
         Generation[] generations = this.generations.getGenerations();
-        if (generations.length == 0) {
-            // If no Generations, create first.
-            networks = this.generations.firstGeneration();
-        } else {
-            // Otherwise, create next one.
-            networks = this.generations.nextGeneration();
-        }
+        Network[] networks = this.generations.nextGeneration();
 
         // Create Networks from the current Generation.
         Network[] nns = new Network[networks.length];
-        for (int i =0; i < networks.length; i++) {
+        for (int i = 0; i < networks.length; i++) {
             Network nn = new Network();
             nn.setSave(networks[i].getSave());
             nns[i] = nn;
@@ -50,16 +39,17 @@ public class NeuroEvolution {
             }
         }
 
-        return nns;
+        this.currentNetworks = nns;
+
     }
 
     /**
      * Adds a new Genome with specified Neural Network and score.
      *
-     * @param network Neural Network.
-     * @param score Score value.
+     * @param networkIndex Played network index.
+     * @param score        Score value.
      */
-   void  networkScore (Network network, int score) {
-//        generations.addGenome(new Genome(score, network.getSave()));
+    void fixScore(int networkIndex, int score) {
+        generations.addGenome(new Genome(currentNetworks[networkIndex], score));
     }
 }
