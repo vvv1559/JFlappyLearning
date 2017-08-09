@@ -1,4 +1,4 @@
-package com.github.vvv1559;
+package com.github.vvv1559.network;
 
 import java.util.ArrayList;
 
@@ -16,6 +16,7 @@ public class Network {
      * @param numberNeuronsHidden Number of Neurons per Hidden layer.
      * @param numberNeuronsOut    Number of Neurons in Output layer.
      */
+    //TODO clean signature
     void perceptronGeneration(int numberNeuronsInput, int[] numberNeuronsHidden, int numberNeuronsOut) {
         layers = new Layer[numberNeuronsHidden.length + 2];
         int index = 0;

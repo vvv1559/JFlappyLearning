@@ -1,54 +1,91 @@
 package com.github.vvv1559.server;
 
 
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import com.github.vvv1559.network.NeuralEvolution;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
-import java.nio.ByteBuffer;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class NeuralPlayer extends WebSocketServlet {
+public class NeuralPlayer extends HttpServlet {
+    private enum Action {
+        RESET("/reset"),
+        NEXT_GEN("/nextGen");
+
+        private static final Map<String, Action> actionsMap;
+
+        static {
+            actionsMap = Stream.of(Action.values()).collect(Collectors.toMap(Action::getPath, Function.identity()));
+        }
+
+        private static Action fromPath(String path) {
+            return actionsMap.get(path);
+        }
+
+
+        private final String path;
+
+        Action(String path) {
+            this.path = "/play" + path;
+        }
+
+        private String getPath() {
+            return path;
+        }
+
+    }
+
+    private static final Gson GSON = new Gson();
+    private static final Type REQUEST_LIST_TYPE = new TypeToken<HashMap<Integer, float[]>>() {
+    }.getType();
+
+
+    private NeuralEvolution neuralEvolution;
+
+    public NeuralPlayer() {
+        neuralEvolution = new NeuralEvolution();
+    }
+
     @Override
-    public void configure(WebSocketServletFactory webSocketServletFactory) {
-        webSocketServletFactory.register(NeuralPlayerAdapter.class);
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setStatus(HttpServletResponse.SC_OK);
+        switch (Action.fromPath(req.getRequestURI())) {
+            case RESET:
+                neuralEvolution = new NeuralEvolution();
+                break;
+
+            case NEXT_GEN:
+                neuralEvolution.nextGeneration();
+                break;
+//                resp.getWriter().append(Integer.toString(NEURO_EVOLUTION.getGenerationSize()));
+
+            default:
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+
+        }
+        resp.setStatus(HttpServletResponse.SC_OK);
     }
 
-    public static class NeuralPlayerAdapter extends WebSocketAdapter {
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setStatus(HttpServletResponse.SC_OK);
+        Map<Integer, float[]> requestInfo = GSON.fromJson(req.getReader(), REQUEST_LIST_TYPE);
 
-        @Override
-        public void onWebSocketConnect(Session sess) {
-            super.onWebSocketConnect(sess);
-            System.out.println("Socket Connected: " + sess);
+        Map<Integer, Integer> r = new HashMap<>();
+        for (Map.Entry<Integer, float[]> entry : requestInfo.entrySet()) {
+            r.put(entry.getKey(), (int) Math.round(Math.random() * 14 - 13));
         }
 
-        @Override
-        public void onWebSocketText(String message) {
-            super.onWebSocketText(message);
-            System.out.println("Received TEXT message: " + message);
-            this.getSession().getRemote().sendStringByFuture("Response from server");
-        }
-
-        @Override
-        public void onWebSocketBinary(byte[] payload, int offset, int len) {
-            super.onWebSocketBinary(payload, offset, len);
-            ByteBuffer byteBuffer = ByteBuffer.wrap(payload);
-            int num = byteBuffer.getInt();
-            float val = byteBuffer.getFloat(4);
-            System.out.println("Get binary num = " + num + " val = " + val);
-        }
-
-        @Override
-        public void onWebSocketClose(int statusCode, String reason) {
-            super.onWebSocketClose(statusCode, reason);
-            System.out.println("Socket Closed: [" + statusCode + "] " + reason);
-        }
-
-        @Override
-        public void onWebSocketError(Throwable cause) {
-            super.onWebSocketError(cause);
-            cause.printStackTrace(System.err);
-        }
+        resp.getWriter().append(GSON.toJson(r));
     }
-
 }

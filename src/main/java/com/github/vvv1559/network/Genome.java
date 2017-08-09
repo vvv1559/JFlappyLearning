@@ -1,4 +1,4 @@
-package com.github.vvv1559;
+package com.github.vvv1559.network;
 
 public class Genome {
     private int score;
@@ -8,10 +8,8 @@ public class Genome {
      * Composed of a score and a Neural Network.
      *
      * @param network network
-     * @param score   score
      */
-    public Genome(Network network, int score) {
-        this.score = score;
+    public Genome(Network network) {
         this.network = network;
     }
 

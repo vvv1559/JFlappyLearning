@@ -1,4 +1,4 @@
-package com.github.vvv1559;
+package com.github.vvv1559.network;
 
 class Neuron {
     private double value = 0;

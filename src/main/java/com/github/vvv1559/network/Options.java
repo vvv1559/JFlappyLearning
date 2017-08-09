@@ -1,4 +1,4 @@
-package com.github.vvv1559;
+package com.github.vvv1559.network;
 
 /**
  * Declaration of module parameters (options) and default values
@@ -42,15 +42,6 @@ class Options {
 
     // Interval of the mutation changes on the synapse weight.
     static final double mutationRange = 0.5;
-
-    // Latest generations saved.
-    static final int historic = 0;
-
-    // Only save score (not the network).
-    static boolean lowHistoric = false;
-
-    // Sort order (-1 = desc, 1 = asc).
-    static final int scoreSort = -1;
 
     // Number of children by breeding.
     static final int nbChild = 1;

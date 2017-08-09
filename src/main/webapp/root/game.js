@@ -4,11 +4,13 @@
 class Player {
     /**
      * Produce new Player instance
-     * @param {number} worldHeight
      */
-    constructor(worldHeight) {
+    constructor() {
         this.populationSize = 10;
-        this.worldHeight = worldHeight;
+        this.worldHeight = 0;
+        this.apiPath = '/play';
+
+        this._httpGet('/reset');
 
         // let Neuvol = new Neuroevolution({
         //   population: 50,
@@ -16,13 +18,31 @@ class Player {
         // });
     }
 
+    _httpGet(path, parameters) {
+        const params = parameters
+            ? ('?' + Object.keys(parameters).map(key => `${key}=${parameters[key]}`).join("&"))
+            : '';
+
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", `${this.apiPath}${path}${params}`, false);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    };
+
+    _httpPost(path, body) {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("POST", `${this.apiPath}${path}`, false);
+        xmlHttp.send(body);
+        return xmlHttp.responseText;
+    };
+
     /**
      * Fix bird score before it died
      * @param {Bird} bird
      * @param {number} score
      */
     birdDied(bird, score) {
-
+        this._httpGet('/died', {index: bird.index, score: score});
     }
 
     /**
@@ -30,27 +50,31 @@ class Player {
      * @return {number}
      */
     nextRoundBirdsCount() {
-        return 10;
-        //nextGeneration
+        this.populationSize = Number.parseInt(this._httpGet('/nextGen'));
+        return this.populationSize;
     }
 
 
     /**
      * Answer the question: need bird's jump or not
-     * @param {Bird} bird
+     * @param {Bird[]} birds
      * @param {PipesLineWithHole[]} pipeLines List of pipe lines in the game
      * @return {boolean}
      */
-    needFlap(bird, pipeLines) {
+    needFlap(birds, pipeLines) {
         //                let inputs = [this.birds[i].top / this.height, nextHole];
 
         let nextHoleTop = 0;
-        const birdsNextPipeIndex = pipeLines.findIndex(pipeLine => pipeLine.left > bird.left);
+        const birdsNextPipeIndex = pipeLines.findIndex(pipeLine => pipeLine.left > birds[0].left);
         if (birdsNextPipeIndex !== -1) {
             nextHoleTop = pipeLines[birdsNextPipeIndex].holeTop;
         }
 
-        return Math.round(Math.random() * 14 - 13) > 0;
+        const request = {};
+        birds.forEach(b => request[b.index] = [b.top / this.worldHeight, nextHoleTop]);
+
+        return JSON.parse(this._httpPost('/needFlap', JSON.stringify(request)));
+        // return Math.round(Math.random() * 14 - 13) > 0;
 
         // if (res > 0.5) {
         //   this.birds[i].flap();
@@ -58,22 +82,6 @@ class Player {
     }
 }
 
-
-// const socket = new WebSocket('ws://localhost:8081/play/');
-//
-// socket.onopen = function () {
-//     console.log('Connected.');
-// };
-//
-// socket.onclose = function (event) {
-//     if (event.wasClean) {
-//         console.log('Connection closed');
-//     } else {
-//         console.log('Connection reset'); // например, "убит" процесс сервера
-//     }
-//     console.log('Code: ' + event.code + ' reason: ' + event.reason);
-// };
-//
 // socket.onmessage = function (event) {
 //     console.log('Received ' + event.data);
 // };
@@ -118,20 +126,20 @@ const speed = (speedMul) => {
 };
 
 /**
- * Format seconds into HH:mm:ss format
- * @param {number} secondsToConvert
+ * Format seconds into HH:mm:ss
+ * @param {number} seconds
  * @return {string} formatted time
  */
-const toHHMMSS = (secondsToConvert) => {
-    let minutes = Math.floor(secondsToConvert / 60);
-    const seconds = secondsToConvert - minutes * 60;
+const toHHMMSS = (seconds) => {
+    let minutes = Math.floor(seconds / 60);
+    seconds -= minutes * 60;
 
-    const hours = Math.floor(minutes / 60);
+    let hours = Math.floor(minutes / 60);
     minutes -= hours * 60;
 
     const fillLeadZero = val => (val < 10) ? "0" + val : val;
 
-    return fillLeadZero(hours) + ':' + fillLeadZero(minutes) + ':' + fillLeadZero(seconds);
+    return [hours, minutes, seconds].map(fillLeadZero).join(":");
 };
 
 window.onload = () => {
@@ -145,7 +153,7 @@ window.onload = () => {
     let inProcess = 0;
     let images = {};
 
-    const startGame = () => {
+    const startGame = (player) => {
         const game = new Game(document.querySelector('#flappy'), images);
         game.start();
         game.update();
@@ -160,7 +168,8 @@ window.onload = () => {
         images[name].src = imagePath;
         images[name].onload = () => {
             if (--inProcess === 0) {
-                startGame();
+                let player = new Player('ws://localhost:8081/play/');
+                setTimeout(() => startGame(player), 500);
             }
         }
     }
@@ -255,6 +264,7 @@ class Game {
      *
      * @param {HTMLCanvasElement} canvas
      * @param {Object.<string, Image>} images
+     * @param {Player} player
      */
     constructor(canvas, images) {
         this.ctx = canvas.getContext('2d');
@@ -271,7 +281,8 @@ class Game {
 
         this.pipesSpawnInterval = 90 * this.pipeSpeed;
 
-        this.player = new Player(this.worldHeight);
+        this.player = new Player();
+        this.player.worldHeight = this.worldHeight;
         this.maxScore = 0;
         this.generation = 0;
 
@@ -284,7 +295,8 @@ class Game {
         this.pipeLines = [];
         this.birds = [];
 
-        for (let i = 0; i < this.player.nextRoundBirdsCount(); i++) {
+        const nextRoundBirdsCount = this.player.nextRoundBirdsCount();
+        for (let i = 0; i < nextRoundBirdsCount; i++) {
             this.birds.push(new Bird(i))
         }
     }
@@ -296,10 +308,11 @@ class Game {
 
         const pipeLines = this.pipeLines;
 
+        const flapInfo = this.player.needFlap(this.birds, pipeLines);
         for (let i = 0; i < this.birds.length; i++) {
             const bird = this.birds[i];
 
-            if (this.player.needFlap(bird, pipeLines)) {
+            if (flapInfo[bird.index] > 0) {
                 bird.flap();
             }
 
