@@ -59,19 +59,22 @@ class Player {
      * Answer the question: need bird's jump or not
      * @param {Bird[]} birds
      * @param {PipesLineWithHole[]} pipeLines List of pipe lines in the game
-     * @return {boolean}
+     * @return {object}
      */
     needFlap(birds, pipeLines) {
         //                let inputs = [this.birds[i].top / this.height, nextHole];
 
+        if (!birds.length || !pipeLines.length) {
+            return {};
+        }
         let nextHoleTop = 0;
-        const birdsNextPipeIndex = pipeLines.findIndex(pipeLine => pipeLine.left > birds[0].left);
+        const birdsNextPipeIndex = pipeLines.findIndex(pipeLine => pipeLine.right > birds[0].left);
         if (birdsNextPipeIndex !== -1) {
             nextHoleTop = pipeLines[birdsNextPipeIndex].holeTop;
         }
 
         const request = {};
-        birds.forEach(b => request[b.index] = [b.top / this.worldHeight, nextHoleTop]);
+        birds.forEach(b => request[b.index] = [b.top / this.worldHeight, nextHoleTop / this.worldHeight]);
 
         return JSON.parse(this._httpPost('/needFlap', JSON.stringify(request)));
         // return Math.round(Math.random() * 14 - 13) > 0;
@@ -153,7 +156,7 @@ window.onload = () => {
     let inProcess = 0;
     let images = {};
 
-    const startGame = (player) => {
+    const startGame = () => {
         const game = new Game(document.querySelector('#flappy'), images);
         game.start();
         game.update();
@@ -264,7 +267,6 @@ class Game {
      *
      * @param {HTMLCanvasElement} canvas
      * @param {Object.<string, Image>} images
-     * @param {Player} player
      */
     constructor(canvas, images) {
         this.ctx = canvas.getContext('2d');
@@ -286,7 +288,6 @@ class Game {
         this.maxScore = 0;
         this.generation = 0;
 
-        this.playedSeconds = 0;
     }
 
     start() {
@@ -294,6 +295,7 @@ class Game {
         this.score = 0;
         this.pipeLines = [];
         this.birds = [];
+        this.playedSeconds = 0;
 
         const nextRoundBirdsCount = this.player.nextRoundBirdsCount();
         for (let i = 0; i < nextRoundBirdsCount; i++) {
@@ -309,10 +311,11 @@ class Game {
         const pipeLines = this.pipeLines;
 
         const flapInfo = this.player.needFlap(this.birds, pipeLines);
+
         for (let i = 0; i < this.birds.length; i++) {
             const bird = this.birds[i];
 
-            if (flapInfo[bird.index] > 0) {
+            if (flapInfo[bird.index] > 0.5) {
                 bird.flap();
             }
 

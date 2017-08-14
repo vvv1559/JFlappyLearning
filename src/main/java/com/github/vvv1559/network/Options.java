@@ -7,18 +7,13 @@ class Options {
 
     /**
      * Generate random number in range [-1; 1]
-     *
-     * @return random number
      */
     static double randomClamped() {
         return Math.random() * 2 - 1;
     }
 
     /**
-     * Logistic activation function.
-     *
-     * @param value input value
-     * @return Logistic function output.
+     * Logistic activation function - Sigmoid 1/(1+e^-x).
      */
     static double activationFunction(double value) {
         return (1 / (1 + Math.exp(-value)));
@@ -26,7 +21,9 @@ class Options {
 
     // Various factors and parameters (along with default values).
     // Perceptron network structure (1 hidden layer).
-    static final int[][] network = new int[][]{new int[]{1}, new int[]{1}, new int[]{1}};
+    static final int neuronsInInputLayer = 2;
+    static final int[] neuronsInHiddenLayers = new int[]{2};
+    static final int neuronsInOutLayer = 1;
 
     // Population by generation.
     static final int population = 50;
@@ -39,6 +36,9 @@ class Options {
 
     // Mutation rate on the weights of synapses.
     static final double mutationRate = 0.1;
+
+    // Probability of crossover
+    static final double crossoverFactor = 0.5;
 
     // Interval of the mutation changes on the synapse weight.
     static final double mutationRange = 0.5;

@@ -1,4 +1,4 @@
-package com.github.vvv1559.network;
+package com.github.vvv1559.server;
 
 import com.github.vvv1559.server.NeuralPlayer;
 import org.eclipse.jetty.server.Server;
@@ -14,7 +14,7 @@ import java.net.URISyntaxException;
 
 public class NeuroServer {
 
-    public static final int SERVER_PORT = 8081;
+    private static final int SERVER_PORT = 8081;
 
     public static void main(String[] args) throws IOException, URISyntaxException {
         Server server = new Server();

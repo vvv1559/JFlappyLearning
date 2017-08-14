@@ -3,43 +3,54 @@ package com.github.vvv1559.network;
 /**
  * Neural Network Layer class.
  */
-public class Layer {
-    private int index = 0;
-    private Neuron[] neurons;
-
-    /**
-     * Build Layer
-     *
-     * @param index index of layer
-     */
-    public Layer(int index) {
-        this.index = index;
-    }
+class Layer {
+    private final Neuron[] neurons;
 
     /**
      * Populate the Layer with a set of randomly weighted Neurons.
-     *
-     * Each Neuron be initialied with nbInputs inputs with a random clamped
-     * value.
-     *
-     * @param numberOfNeurons Number of neurons.
-     * @param numberOfInputs nbInputs Number of inputs.
      */
-    public void populate(int numberOfNeurons, int numberOfInputs) {
+    Layer(int numberOfNeurons, int numberOfInputs) {
         neurons = new Neuron[numberOfNeurons];
 
         for (int i = 0; i < numberOfNeurons; i++) {
-            Neuron neuron = new Neuron();
-            neuron.populate(numberOfInputs);
-            neurons[i] = neuron;
+            neurons[i] = new Neuron(numberOfInputs);
+        }
+
+    }
+
+    Layer(Layer layer) {
+        neurons = new Neuron[layer.neurons.length];
+        for (int i = 0; i < neurons.length; i++) {
+            neurons[i] = new Neuron(layer.neurons[i]);
         }
     }
 
-    public int getIndex() {
-        return index;
+    void setInputs(double[] prevLayerOutput) {
+        for (Neuron neuron : neurons) {
+            neuron.evaluate(prevLayerOutput);
+        }
     }
 
-    public Neuron[] getNeurons() {
-        return neurons;
+    void setOutputs(double[] inputs) {
+        for (int i = 0; i < inputs.length; i++) {
+            neurons[i].setOutput(inputs[i]);
+        }
+    }
+
+    double[] getOutputs() {
+        double[] result = new double[neurons.length];
+        for (int i = 0; i < neurons.length; i++) {
+            result[i] = neurons[i].getOutput();
+        }
+
+        return result;
+    }
+
+    Neuron getNeuron(int index) {
+        return neurons[index];
+    }
+
+    int neuronsCount() {
+        return neurons.length;
     }
 }

@@ -20,7 +20,9 @@ import java.util.stream.Stream;
 public class NeuralPlayer extends HttpServlet {
     private enum Action {
         RESET("/reset"),
-        NEXT_GEN("/nextGen");
+        NEXT_GEN("/nextGen"),
+        DIED("/died"),
+        NEED_FLAP("/needFlap");
 
         private static final Map<String, Action> actionsMap;
 
@@ -46,7 +48,7 @@ public class NeuralPlayer extends HttpServlet {
     }
 
     private static final Gson GSON = new Gson();
-    private static final Type REQUEST_LIST_TYPE = new TypeToken<HashMap<Integer, float[]>>() {
+    private static final Type REQUEST_LIST_TYPE = new TypeToken<HashMap<Integer, double[]>>() {
     }.getType();
 
 
@@ -65,9 +67,13 @@ public class NeuralPlayer extends HttpServlet {
                 break;
 
             case NEXT_GEN:
-                neuralEvolution.nextGeneration();
+                resp.getWriter().append(Integer.toString(neuralEvolution.nextGeneration()));
                 break;
-//                resp.getWriter().append(Integer.toString(NEURO_EVOLUTION.getGenerationSize()));
+
+            case DIED:
+                int index = Integer.parseInt(req.getParameter("index"));
+                int score = Integer.parseInt(req.getParameter("score"));
+                neuralEvolution.fixScore(index, score);
 
             default:
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -79,13 +85,21 @@ public class NeuralPlayer extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setStatus(HttpServletResponse.SC_OK);
-        Map<Integer, float[]> requestInfo = GSON.fromJson(req.getReader(), REQUEST_LIST_TYPE);
+        switch (Action.fromPath(req.getRequestURI())) {
+            case NEED_FLAP:
+                Map<Integer, double[]> requestInfo = GSON.fromJson(req.getReader(), REQUEST_LIST_TYPE);
 
-        Map<Integer, Integer> r = new HashMap<>();
-        for (Map.Entry<Integer, float[]> entry : requestInfo.entrySet()) {
-            r.put(entry.getKey(), (int) Math.round(Math.random() * 14 - 13));
+                Map<Integer, Double> r = new HashMap<>();
+                for (Map.Entry<Integer, double[]> entry : requestInfo.entrySet()) {
+                    double[] result = neuralEvolution.compute(entry.getKey(), entry.getValue());
+                    r.put(entry.getKey(), result[0]);
+                }
+
+                resp.getWriter().append(GSON.toJson(r));
+                break;
+
+            default:
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
-
-        resp.getWriter().append(GSON.toJson(r));
     }
 }

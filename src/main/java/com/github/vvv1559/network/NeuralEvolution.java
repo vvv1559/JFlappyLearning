@@ -6,10 +6,12 @@ public class NeuralEvolution {
     /**
      * Produce next generation
      */
-    public void nextGeneration() {
+    public int nextGeneration() {
         currentGeneration = currentGeneration == null
-                ? new Generation()
-                : Generation.generateNextGeneration(currentGeneration);
+            ? new Generation()
+            : Generation.generateNextGeneration(currentGeneration);
+
+        return currentGeneration.genomesCount();
     }
 
     /**
@@ -20,5 +22,9 @@ public class NeuralEvolution {
      */
     public void fixScore(int networkIndex, int score) {
         currentGeneration.fixScore(networkIndex, score);
+    }
+
+    public double[] compute(int index, double[] values) {
+        return currentGeneration.compute(index, values);
     }
 }

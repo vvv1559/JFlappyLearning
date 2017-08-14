@@ -1,35 +1,52 @@
 package com.github.vvv1559.network;
 
+import java.util.Arrays;
+
 class Neuron {
-    private double value = 0;
-    //FIXME: real size
-    private double[] weights;
+    private double output = 0;
+    private final double[] weights;
 
     /**
      * Initialize number of neuron weights to random clamped values.
-     * @param numberOfWeights Number of neuron weights (number of inputs).
+     *
+     * @param numberOfInputs Number of neuron weights (number of inputs).
      */
-    void populate(int numberOfWeights) {
-        this.weights = new double[numberOfWeights];
-        for (int i = 0; i < numberOfWeights; i++) {
+    Neuron(int numberOfInputs) {
+        this.weights = new double[numberOfInputs];
+        for (int i = 0; i < numberOfInputs; i++) {
             this.weights[i] = Options.randomClamped();
         }
     }
 
-
-    public double getValue() {
-        return value;
+    Neuron(Neuron neuron) {
+        weights = Arrays.copyOf(neuron.weights, neuron.weights.length);
     }
 
-    public void setValue(double value) {
-        this.value = value;
+    void evaluate(double[] inputs) {
+        double sum = 0;
+        for (int i = 0; i < inputs.length; i++) {
+            sum += inputs[i] * weights[i];
+        }
+        output = Options.activationFunction(sum);
     }
 
-    public double[] getWeights() {
-        return weights;
+    double getOutput() {
+        return output;
     }
 
-    public void setWeights(double[] weights) {
-        this.weights = weights;
+    void setOutput(double output) {
+        this.output = output;
+    }
+
+    int weightsCount() {
+        return weights.length;
+    }
+
+    double getWeight(int index) {
+        return weights[index];
+    }
+
+    void setWeight(int index, double weight) {
+        weights[index] = weight;
     }
 }
